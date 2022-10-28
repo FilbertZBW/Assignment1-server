@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="CheckStyle-IDEA-Module">
+    <option name="configuration">
+      <map />
+    </option>
+  </component>
+  <component name="FacetManager">
+    <facet type="web" name="Web">
+      <configuration>
+        <descriptors>
+          <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/WEB-INF/web.xml" />
+        </descriptors>
+        <webroots>
+          <root url="file://$MODULE_DIR$" relative="/" />
+        </webroots>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager">
+    <output url="file://$MODULE_DIR$/../../production/lab2_war_exploded" />
+    <output-test url="file://$MODULE_DIR$/../../test/lab2_war_exploded" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" exported="" name="commons-io-2.11" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Maven: com.rabbitmq:amqp-client:5.16.0" level="project" />
+    <orderEntry type="library" exported="" name="Maven: com.google.code.gson:gson:2.9.0" level="project" />
+    <orderEntry type="library" exported="" name="Maven: javax.servlet:javax.servlet-api:4.0.1" level="project" />
+    <orderEntry type="library" exported="" scope="RUNTIME" name="Maven: org.slf4j:slf4j-api:2.0.3" level="project" />
+  </component>
+</module>
