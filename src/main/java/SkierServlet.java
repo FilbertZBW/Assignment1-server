@@ -1,5 +1,6 @@
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -21,6 +22,23 @@ import com.rabbitmq.client.DeliverCallback;
 @WebServlet(name = "SkierServlet", value = "/skiers/*")
 public class SkierServlet extends HttpServlet {
   private final static String QUEUE_NAME = "threadQ";
+  private static Connection connection;
+
+  @Override
+  public void init() throws ServletException {
+    super.init();
+    ConnectionFactory factory = new ConnectionFactory();
+    factory.setUsername("username");
+    factory.setPassword("970422");
+    factory.setVirtualHost("/");
+    factory.setHost("54.201.48.169");
+    factory.setPort(5672);
+    try {
+      connection = factory.newConnection();
+    } catch (IOException | TimeoutException e) {
+      e.printStackTrace();
+    }
+  }
 
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -48,23 +66,14 @@ public class SkierServlet extends HttpServlet {
   }
 
   private boolean isUrlValid(String[] urlPath) {
-    if (urlPath.length != 2) {
-      return false;
-    }
-
-    for (String s : urlPath) {
-      if (s.contains(" ")) {
-        return false;
-      }
-    }
-
-    return true;
+    return urlPath.length == 8;
   }
 
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    response.setContentType("application/json");
+    response.setContentType("text/plain");
     String urlPath = request.getPathInfo();
+    System.out.println(urlPath);
     String reqBody = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
     JsonObject jsonObject = JsonParser.parseString(reqBody).getAsJsonObject();
     if (urlPath == null || urlPath.isEmpty()) {
@@ -85,58 +94,20 @@ public class SkierServlet extends HttpServlet {
     }
     // consumer send messages to rabbitmq
 
-    ConnectionFactory factory = new ConnectionFactory();
-    factory.setUsername("username");
-    factory.setPassword("970422");
-    factory.setVirtualHost("/");
-    factory.setHost("35.90.145.233");
-    factory.setPort(5672);
+    jsonObject.add("skierID", new JsonPrimitive(urlParts[7]));
+    jsonObject.add("dayID", new JsonPrimitive(urlParts[5]));
+    jsonObject.add("seasonID", new JsonPrimitive(urlParts[3]));
+    jsonObject.add("resortID", new JsonPrimitive(urlParts[1]));
 
-    Runnable runnable = () -> {
-      final Connection conn;
-      try {
-        conn = factory.newConnection();
-        Channel channel = conn.createChannel();
-        channel.queueDeclare(QUEUE_NAME, true, false, false, null);
-        System.out.println(jsonObject.toString());
-        String message = "time:" + jsonObject.get("time").getAsString() + ", liftID:" + jsonObject.get("liftID").getAsString();  //TODO
-        channel.basicPublish("", QUEUE_NAME, null, message.getBytes(StandardCharsets.UTF_8));
-        channel.close();
-      } catch (TimeoutException | IOException e) {
-        e.printStackTrace();
-      }
-    };
-
-    for (int i = 0; i < 16; i++) {
-      Thread sender = new Thread(runnable);
-      sender.start();
-    }
-
-    ConnectionFactory factory2 = new ConnectionFactory();
-    factory2.setUsername("username");
-    factory2.setPassword("970422");
-    factory2.setVirtualHost("/");
-    factory2.setHost("35.90.145.233");
-    factory2.setPort(5672);
-
-    Runnable runnable2 = () -> {
-      final Connection conn;
-      try {
-        conn = factory.newConnection();
-        Channel channel = conn.createChannel();
-        channel.queueDeclare(QUEUE_NAME, true, false, false, null);
-        System.out.println(jsonObject.toString());
-        String message = "time:" + jsonObject.get("time").getAsString() + ", liftID:" + jsonObject.get("liftID").getAsString();  //TODO
-        channel.basicPublish("", QUEUE_NAME, null, message.getBytes(StandardCharsets.UTF_8));
-        channel.close();
-      } catch (TimeoutException | IOException e) {
-        e.printStackTrace();
-      }
-    };
-
-    for (int i = 0; i < 16; i++) {
-      Thread sender = new Thread(runnable2);
-      sender.start();
+    try {
+      Channel channel = connection.createChannel();
+      channel.queueDeclare(QUEUE_NAME, true, false, false, null);
+      System.out.println(reqBody);
+//        String message = "time:" + jsonObject.get("time").getAsString() + ", liftID:" + jsonObject.get("liftID").getAsString();  //TODO
+      channel.basicPublish("", QUEUE_NAME, null, jsonObject.toString().getBytes(StandardCharsets.UTF_8));
+      channel.close();
+    } catch (TimeoutException | IOException e) {
+      e.printStackTrace();
     }
   }
 }
